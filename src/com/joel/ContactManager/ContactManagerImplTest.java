@@ -107,7 +107,7 @@ public class ContactManagerImplTest {
 	}
 
 	@Test(expected=IllegalArgumentException.class)
-	public void futureMeetingInPastTest() {
+	public void futureMeetingTest() {
 		setUpContacts();
 		mgr.addFutureMeeting(
 				mgr.getContacts(moe.getId()),
@@ -185,10 +185,6 @@ public class ContactManagerImplTest {
 		assertEquals("Find mismatch",
 				mgr.getFutureMeeting(meet3Id), mgr.getMeeting(meet3Id));
 		
-		assertNull("Should not be in the past", mgr.getPastMeeting(meet1Id));
-		assertNull("Should not be in the past", mgr.getPastMeeting(meet2Id));
-		assertNull("Should not be in the past", mgr.getPastMeeting(meet3Id));
-
 		Meeting[] expectedMeetsMoe = {meet1, meet2, meet3};
 		assertEquals("Wrong meeting list",
 				new HashSet<Meeting>(Arrays.asList(expectedMeetsMoe)),
@@ -216,7 +212,7 @@ public class ContactManagerImplTest {
 
 		assertEquals("Wrong meeting list",
 				new HashSet<PastMeeting>(),
-				new HashSet<PastMeeting>(mgr.getPastMeetingList(curly)));
+				new HashSet<PastMeeting>(mgr.getPastMeetingList(moe)));
 
 	}
 }
