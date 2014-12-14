@@ -2,13 +2,21 @@ package com.joel.ContactManager;
 
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
  * A class to manage your contacts and meetings.
  */
 public class ContactManagerImpl implements ContactManager{
+	private Map<Integer,Contact> contacts;
+	
+	public ContactManagerImpl() {
+		this.contacts = new HashMap<Integer,Contact>();
+	}
 	
 	/**
 	 * Add a new meeting to be held in the future.
@@ -169,7 +177,8 @@ public class ContactManagerImpl implements ContactManager{
 	 *             if the name or the notes are null
 	 */
 	public void addNewContact(String name, String notes) {
-		
+		Contact c = new ContactImpl(name, notes);
+		contacts.put(c.getId(), c);
 	}
 
 	/**
@@ -182,7 +191,15 @@ public class ContactManagerImpl implements ContactManager{
 	 *             if any of the IDs does not correspond to a real contact
 	 */
 	public Set<Contact> getContacts(int... ids) {
-		return null;
+		Set<Contact> matches = new HashSet<Contact>();
+		for (int id: ids) {
+			Contact c = contacts.get(id);
+			if (c == null) {
+				throw new IllegalArgumentException("No contact with id "+ id);
+			}
+			matches.add(c);
+		}
+		return matches;
 	}
 
 	/**
@@ -195,7 +212,18 @@ public class ContactManagerImpl implements ContactManager{
 	 *             if the parameter is null
 	 */
 	public Set<Contact> getContacts(String name) {
-		return null;
+		if (name == null) {
+			throw new NullPointerException("Search for null string");
+		}
+		Set<Contact> matches = new HashSet<Contact>();
+		Iterator<Contact> i = contacts.values().iterator();
+		while (i.hasNext()) {
+			Contact c = i.next();
+			if (c.getName().contains(name)) {
+				matches.add(c);
+			}
+		}
+		return matches;
 	}
 
 	/**

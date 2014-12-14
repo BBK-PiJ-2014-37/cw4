@@ -34,7 +34,7 @@ public class ContactManagerImplTest {
 		mgr.addNewContact("Moe Stooge", "The smart one");
 		Set<Contact> contacts = mgr.getContacts("");
 		assertEquals("Wrong number of contacts", 1, contacts.size());
-		Contact[] contactArray = (Contact[]) contacts.toArray();
+		Contact[] contactArray = contacts.toArray(new Contact[0]);
 		assertEquals("Wrong name set", "Moe Stooge",
 				contactArray[0].getName());	
 		assertEquals("Wrong notes set", "The smart one",
