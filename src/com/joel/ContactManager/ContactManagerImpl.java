@@ -1,6 +1,9 @@
 package com.joel.ContactManager;
 
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collection;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -12,10 +15,14 @@ import java.util.Set;
  * A class to manage your contacts and meetings.
  */
 public class ContactManagerImpl implements ContactManager{
-	private Map<Integer,Contact> contacts;
+	private Map<Integer,Contact> contactList;
+	private Map<Integer,FutureMeeting> futureMeetings;
+	private Map<Integer, PastMeeting> pastMeetings;
 	
 	public ContactManagerImpl() {
-		this.contacts = new HashMap<Integer,Contact>();
+		this.contactList = new HashMap<Integer,Contact>();
+		this.futureMeetings = new HashMap<Integer,FutureMeeting>();
+		this.pastMeetings = new HashMap<Integer, PastMeeting>();
 	}
 	
 	/**
@@ -32,7 +39,15 @@ public class ContactManagerImpl implements ContactManager{
 	 *             of if any contact is unknown / non-existent
 	 */
 	public int addFutureMeeting(Set<Contact> contacts, Calendar date) {
-		return 0;	
+		if (date.before(new GregorianCalendar())) {
+			throw new IllegalArgumentException("Date not in future " + date);
+		}
+		if (contacts.size() == 0 || !validateContacts(contacts)) {
+			throw new IllegalArgumentException("Unknown contact(s)");			
+		}
+		FutureMeeting m = new FutureMeetingImpl(contacts, date);
+		futureMeetings.put(m.getId(), m);
+		return m.getId();
 	}
 
 	/**
@@ -60,7 +75,10 @@ public class ContactManagerImpl implements ContactManager{
 	 *             if there is a meeting with that ID happening in the past
 	 */
 	public FutureMeeting getFutureMeeting(int id) {
-		return null;
+		if (pastMeetings.get(id) != null) {
+			throw new IllegalArgumentException();
+		}
+		return futureMeetings.get(id);
 	}
 
 	/**
@@ -71,7 +89,11 @@ public class ContactManagerImpl implements ContactManager{
 	 * @return the meeting with the requested ID, or null if it there is none.
 	 */
 	public Meeting getMeeting(int id) {
-		return null; 
+		Meeting m = pastMeetings.get(id);
+		if (m != null) {
+			return m;
+		}
+		return futureMeetings.get(id);
 	}
 
 	/**
@@ -88,7 +110,17 @@ public class ContactManagerImpl implements ContactManager{
 	 *             if the contact does not exist
 	 */
 	public List<Meeting> getFutureMeetingList(Contact contact) {
-		return null;
+		if (!contactList.containsKey(contact.getId())) {
+			throw new IllegalArgumentException("Contact " + contact.getName()
+					+ " does not exist.");
+		}
+		List<Meeting> result = new ArrayList<Meeting>(); 
+		for (FutureMeeting m : futureMeetings.values()) {
+			if(m.getContacts().contains(contact)) {
+				result.add(m);
+			}
+		}
+		return result;
 	}
 
 	/**
@@ -103,7 +135,13 @@ public class ContactManagerImpl implements ContactManager{
 	 * @return the list of meetings
 	 */
 	public List<Meeting> getFutureMeetingList(Calendar date) {
-		return null;
+		List<Meeting> result = new ArrayList<Meeting>(); 
+		for (FutureMeeting m : futureMeetings.values()) {
+			if(m.getDate().equals(date)) {
+				result.add(m);
+			}
+		}
+		return result;
 	}
 	
 	/**
@@ -120,7 +158,7 @@ public class ContactManagerImpl implements ContactManager{
 	 *             if the contact does not exist
 	 */
 	public List<PastMeeting> getPastMeetingList(Contact contact) {
-		return null;
+		return new ArrayList<PastMeeting>();
 	}
 
 	/**
@@ -166,6 +204,16 @@ public class ContactManagerImpl implements ContactManager{
 		
 	}
 
+	private boolean validateContacts(Collection<Contact> contacts) {
+		Set<Contact> valid = new HashSet<Contact>(contactList.values());
+		for (Contact c: contacts) {
+			if (!valid.contains(c)) {
+				return false;
+			}
+		}
+		return true;
+	}
+	
 	/**
 	 * Create a new contact with the specified name and notes.
 	 *
@@ -178,7 +226,7 @@ public class ContactManagerImpl implements ContactManager{
 	 */
 	public void addNewContact(String name, String notes) {
 		Contact c = new ContactImpl(name, notes);
-		contacts.put(c.getId(), c);
+		contactList.put(c.getId(), c);
 	}
 
 	/**
@@ -193,7 +241,7 @@ public class ContactManagerImpl implements ContactManager{
 	public Set<Contact> getContacts(int... ids) {
 		Set<Contact> matches = new HashSet<Contact>();
 		for (int id: ids) {
-			Contact c = contacts.get(id);
+			Contact c = contactList.get(id);
 			if (c == null) {
 				throw new IllegalArgumentException("No contact with id "+ id);
 			}
@@ -216,7 +264,7 @@ public class ContactManagerImpl implements ContactManager{
 			throw new NullPointerException("Search for null string");
 		}
 		Set<Contact> matches = new HashSet<Contact>();
-		Iterator<Contact> i = contacts.values().iterator();
+		Iterator<Contact> i = contactList.values().iterator();
 		while (i.hasNext()) {
 			Contact c = i.next();
 			if (c.getName().contains(name)) {
