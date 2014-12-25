@@ -111,6 +111,33 @@ public class ContactManagerImpl implements ContactManager{
 	}
 
 	/**
+	 * Returns the list of meetings scheduled with this contact.
+	 *
+	 * If there are none, the returned list will be empty. Otherwise, the list
+	 * will be chronologically sorted and will not contain any duplicates.
+	 *
+	 * @param contact
+	 *            one of the user’s contacts
+	 * @return the list of meeting(s) scheduled with this contact (maybe
+	 *         empty).
+	 * @throws IllegalArgumentException
+	 *             if the contact does not exist
+	 */
+	private List<Meeting>getMeetingList(Contact contact) {	
+		if (!contactList.containsKey(contact.getId())) {
+			throw new IllegalArgumentException("Contact " + contact.getName()
+					+ " does not exist.");
+		}
+		List<Meeting> result = new ArrayList<Meeting>(); 
+		for (Meeting m : meetingList.values()) {
+			if(m.getContacts().contains(contact)) {
+				result.add(m);
+			}
+		}
+		return result;
+	}
+
+	/**
 	 * Returns the list of future meetings scheduled with this contact.
 	 *
 	 * If there are none, the returned list will be empty. Otherwise, the list
@@ -124,17 +151,14 @@ public class ContactManagerImpl implements ContactManager{
 	 *             if the contact does not exist
 	 */
 	public List<Meeting> getFutureMeetingList(Contact contact) {
-		if (!contactList.containsKey(contact.getId())) {
-			throw new IllegalArgumentException("Contact " + contact.getName()
-					+ " does not exist.");
-		}
-		List<Meeting> result = new ArrayList<Meeting>(); 
-		for (Meeting m : meetingList.values()) {
-			if(m.getContacts().contains(contact)) {
-				result.add(m);
+		List<Meeting> list = new ArrayList<Meeting>();
+		GregorianCalendar today = new GregorianCalendar();
+		for (Meeting meet: getMeetingList(contact)) {
+			if (meet.getDate().after(today)) {
+				list.add(meet);
 			}
 		}
-		return result;
+		return list;
 	}
 
 	/**
@@ -172,7 +196,14 @@ public class ContactManagerImpl implements ContactManager{
 	 *             if the contact does not exist
 	 */
 	public List<PastMeeting> getPastMeetingList(Contact contact) {
-		return new ArrayList<PastMeeting>();
+		List<PastMeeting> list = new ArrayList<PastMeeting>();
+		GregorianCalendar today = new GregorianCalendar();
+		for (Meeting meet: getMeetingList(contact)) {
+			if (meet.getDate().before(today)) {
+				list.add((PastMeeting)meet);
+			}
+		}
+		return list;
 	}
 
 	/**
@@ -192,7 +223,18 @@ public class ContactManagerImpl implements ContactManager{
 	 *             if any of the arguments is null
 	 */
 	public int addNewPastMeeting(Set<Contact> contacts, Calendar date, String text) {
-		return 0;
+		if (date.after(new GregorianCalendar())) {
+			throw new IllegalArgumentException("Date not in past " + date);
+		}
+		if (contacts.size() == 0 || !validateContacts(contacts)) {
+			throw new IllegalArgumentException("Unknown contact(s)");			
+		}
+		if (text == null) {
+			throw new NullPointerException("Expected meeting notes");
+		}
+		PastMeeting m = new PastMeetingImpl(contacts, date, text);
+		meetingList.put(m.getId(), m);
+		return m.getId();
 	}
 
 	/**

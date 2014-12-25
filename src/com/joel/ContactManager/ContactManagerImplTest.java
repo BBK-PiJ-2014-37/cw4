@@ -232,7 +232,7 @@ public class ContactManagerImplTest {
 	@Test(expected=NullPointerException.class)
 	public void pastMeetingNullNotes() {
 		setUpContacts();
-		mgr.addNewPastMeeting(new HashSet<Contact>(), new GregorianCalendar(1963, 01, 30), null);
+		mgr.addNewPastMeeting(mgr.getContacts(moe.getId()), new GregorianCalendar(1963, 01, 30), null);
 	}
 
 	@Test(expected=NullPointerException.class)
