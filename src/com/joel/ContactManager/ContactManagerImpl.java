@@ -258,7 +258,21 @@ public class ContactManagerImpl implements ContactManager{
 	 *             if the notes are null
 	 */
 	public void addMeetingNotes(int id, String text) {
-		
+		Meeting meet = getMeeting(id);
+		if (meet == null) {
+			throw new IllegalArgumentException("Attempt to add note to non-existing meeting");
+		}
+		if (meet.getDate().after(new GregorianCalendar())) {
+			throw new IllegalStateException("Attempt to add note to future meeting");
+		}
+		// What do I do here?
+		// If meet is a PastMeeting, I can't change its notes (no method for that).
+		// If it is a FutureMeeting, I can replace it with a PastMeeting. But I can't
+		// figure out what it is without using instanceof, which is discouraged.
+		if (meet instanceof FutureMeeting) {
+			addNewPastMeeting(meet.getContacts(), meet.getDate(), text);
+			meetingList.remove(meet.getId());
+		}
 	}
 
 	/**
