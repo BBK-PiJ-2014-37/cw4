@@ -16,13 +16,11 @@ import java.util.Set;
  */
 public class ContactManagerImpl implements ContactManager{
 	private Map<Integer,Contact> contactList;
-	private Map<Integer,FutureMeeting> futureMeetings;
-	private Map<Integer, PastMeeting> pastMeetings;
+	private Map<Integer,Meeting> meetingList;
 	
 	public ContactManagerImpl() {
 		this.contactList = new HashMap<Integer,Contact>();
-		this.futureMeetings = new HashMap<Integer,FutureMeeting>();
-		this.pastMeetings = new HashMap<Integer, PastMeeting>();
+		this.meetingList = new HashMap<Integer,Meeting>();
 	}
 	
 	/**
@@ -46,13 +44,28 @@ public class ContactManagerImpl implements ContactManager{
 			throw new IllegalArgumentException("Unknown contact(s)");			
 		}
 		FutureMeeting m = new FutureMeetingImpl(contacts, date);
-		futureMeetings.put(m.getId(), m);
+		meetingList.put(m.getId(), m);
 		return m.getId();
 	}
 
 	/**
 	 * Returns the PAST meeting with the requested ID, or null if it there is
 	 * none.
+	 * 
+	 * PROBLEM WITH THIS METHOD: Say a user added a future meeting. Time
+	 * passes. Now it's in the past. User calls getPastMeeting to retrieve
+	 * the meeting. They get a PastMeeting pointer, but the object is
+	 * is actually a FutureMeeting! This can lead to run-time errors.
+	 * 
+	 * An alternative could be to have this method replace the FutureMeeting
+	 * with a PastMeeting, and return that instead, but that would involve
+	 * asking for the object's class. Since replacing the FutureMeeting with
+	 * a PastMeeting involves getting a new ID, the user would also get a
+	 * meeting with a different ID than they asked for, which is at least
+	 * confusing.
+	 * 
+	 * I can't think of a way to solve this without violating the interface
+	 * provided for the coursework.
 	 *
 	 * @param id
 	 *            the ID for the meeting
@@ -61,7 +74,11 @@ public class ContactManagerImpl implements ContactManager{
 	 *             if there is a meeting with that ID happening in the future
 	 */
 	public PastMeeting getPastMeeting(int id) {
-		return null;
+		Meeting m = getMeeting(id);
+		if (m != null && m.getDate(). after(new GregorianCalendar())) {
+			throw new IllegalArgumentException();
+		}
+		return (PastMeeting)m;
 	}
 
 	/**
@@ -75,10 +92,11 @@ public class ContactManagerImpl implements ContactManager{
 	 *             if there is a meeting with that ID happening in the past
 	 */
 	public FutureMeeting getFutureMeeting(int id) {
-		if (pastMeetings.get(id) != null) {
+		Meeting m = getMeeting(id);
+		if (m != null && m.getDate().before(new GregorianCalendar())) {
 			throw new IllegalArgumentException();
 		}
-		return futureMeetings.get(id);
+		return (FutureMeeting)m;
 	}
 
 	/**
@@ -89,11 +107,7 @@ public class ContactManagerImpl implements ContactManager{
 	 * @return the meeting with the requested ID, or null if it there is none.
 	 */
 	public Meeting getMeeting(int id) {
-		Meeting m = pastMeetings.get(id);
-		if (m != null) {
-			return m;
-		}
-		return futureMeetings.get(id);
+		return meetingList.get(id);
 	}
 
 	/**
@@ -115,7 +129,7 @@ public class ContactManagerImpl implements ContactManager{
 					+ " does not exist.");
 		}
 		List<Meeting> result = new ArrayList<Meeting>(); 
-		for (FutureMeeting m : futureMeetings.values()) {
+		for (Meeting m : meetingList.values()) {
 			if(m.getContacts().contains(contact)) {
 				result.add(m);
 			}
@@ -136,7 +150,7 @@ public class ContactManagerImpl implements ContactManager{
 	 */
 	public List<Meeting> getFutureMeetingList(Calendar date) {
 		List<Meeting> result = new ArrayList<Meeting>(); 
-		for (FutureMeeting m : futureMeetings.values()) {
+		for (Meeting m : meetingList.values()) {
 			if(m.getDate().equals(date)) {
 				result.add(m);
 			}
