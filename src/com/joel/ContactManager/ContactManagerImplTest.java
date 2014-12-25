@@ -328,12 +328,12 @@ public class ContactManagerImplTest {
 		Calendar date = new GregorianCalendar(1963, 01, 30);
 		Set<Contact> guests = mgr.getContacts(moe.getId());
 		int meetId = mgr.addNewPastMeeting(guests, date, "Nothing happened");
-		mgr.addMeetingNotes(meetId, "Then even less happened");
+		mgr.addMeetingNotes(meetId, "Really, nothing happened");
 		PastMeeting meet = (PastMeeting)mgr.getMeeting(meetId);
 		assertNotNull("Expected a meeting", meet);
 		assertEquals("Wrong guest list", guests, meet.getContacts());
 		assertEquals("Wrong date", date, meet.getDate());
-		assertEquals("Wrong notes", "Nothing happened\nThen even less happened", meet.getNotes());
+		assertEquals("Wrong notes", "Really, nothing happened", meet.getNotes());
 		assertEquals("Expected to find", meet, mgr.getMeeting(meetId));
 	}
 
@@ -342,7 +342,8 @@ public class ContactManagerImplTest {
 		setUpContacts();
 		Calendar date = new GregorianCalendar(2100, 01, 30);
 		Set<Contact> guests = mgr.getContacts(moe.getId());
-		mgr.addFutureMeeting(guests, date);
+		int meetId = mgr.addFutureMeeting(guests, date);
+		mgr.addMeetingNotes(meetId, "Really, nothing happened");
 	}
 
 	@Test
