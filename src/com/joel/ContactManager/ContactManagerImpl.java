@@ -191,8 +191,8 @@ public class ContactManagerImpl implements ContactManager{
 	 * @throws NullPointerException
 	 *             if any of the arguments is null
 	 */
-	public void addNewPastMeeting(Set<Contact> contacts, Calendar date, String text) {
-		
+	public int addNewPastMeeting(Set<Contact> contacts, Calendar date, String text) {
+		return 0;
 	}
 
 	/**

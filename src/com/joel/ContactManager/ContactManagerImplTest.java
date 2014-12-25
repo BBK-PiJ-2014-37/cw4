@@ -106,7 +106,7 @@ public class ContactManagerImplTest {
 	}
 
 	@Test(expected=IllegalArgumentException.class)
-	public void futureMeetingTest() {
+	public void futureMeetingInPastTest() {
 		setUpContacts();
 		mgr.addFutureMeeting(
 				mgr.getContacts(moe.getId()),
@@ -133,7 +133,7 @@ public class ContactManagerImplTest {
 	}
 
 	@Test
-	public void getFutureMeetingWhileEmpty() {
+	public void getMeetingWhileEmpty() {
 		assertNull("No meeting expected", mgr.getMeeting(1));
 	}
 	
@@ -149,7 +149,7 @@ public class ContactManagerImplTest {
 		assertEquals("Wrong date", date, meet.getDate());
 		assertEquals("Expected to find", meet, mgr.getMeeting(meetId));
 	}
-
+	
 	@Test
 	public void addSeveralFutureMeetingsTest() {
 		setUpContacts();
@@ -214,4 +214,112 @@ public class ContactManagerImplTest {
 				new HashSet<PastMeeting>(mgr.getPastMeetingList(moe)));
 
 	}
+
+	@Test(expected=IllegalArgumentException.class)
+	public void pastMeetingInFutureTest() {
+		setUpContacts();
+		mgr.addNewPastMeeting(mgr.getContacts(moe.getId()), new GregorianCalendar(2100, 01, 30),
+				"Bogus notes");
+	}
+
+	@Test(expected=IllegalArgumentException.class)
+	public void pastMeetingEmptyGuests() {
+		setUpContacts();
+		mgr.addNewPastMeeting(new HashSet<Contact>(), new GregorianCalendar(1963, 01, 30),
+				"Bogus notes");
+	}
+
+	@Test(expected=NullPointerException.class)
+	public void pastMeetingNullNotes() {
+		setUpContacts();
+		mgr.addNewPastMeeting(new HashSet<Contact>(), new GregorianCalendar(1963, 01, 30), null);
+	}
+
+	@Test(expected=NullPointerException.class)
+	public void pastMeetingNullGuests() {
+		setUpContacts();
+		mgr.addNewPastMeeting(null,	new GregorianCalendar(1963, 01, 30), "Bogus notes");
+	}
+
+	@Test(expected=NullPointerException.class)
+	public void pastMeetingNullDate() {
+		setUpContacts();
+		mgr.addNewPastMeeting(new HashSet<Contact>(), null, "Bogus notes");
+	}
+
+	@Test(expected=IllegalArgumentException.class)
+	public void pastMeetingUnknownGuest() {
+		setUpContacts();
+		Contact wrongContact = new ContactImpl("Charlie Chaplin", "The Tramp");
+		Set<Contact> guests = new HashSet<Contact>();
+		guests.add(moe);
+		guests.add(wrongContact);
+		mgr.addFutureMeeting(guests, new GregorianCalendar(1963, 01, 30));
+	}
+	
+	@Test
+	public void addPastMeetingTest() {
+		setUpContacts();
+		Calendar date = new GregorianCalendar(1963, 01, 30);
+		Set<Contact> guests = mgr.getContacts(moe.getId());
+		int meetId = mgr.addNewPastMeeting(guests, date, "Nothing happened");
+		PastMeeting meet = (PastMeeting)mgr.getMeeting(meetId);
+		assertNotNull("Expected a meeting", meet);
+		assertEquals("Wrong guest list", guests, meet.getContacts());
+		assertEquals("Wrong date", date, meet.getDate());
+		assertEquals("Wrong notes", "Nothing happened", meet.getNotes());
+		assertEquals("Expected to find", meet, mgr.getMeeting(meetId));
+	}
+	
+	@Test
+	public void addSeveralPastMeetingsTest() {
+		setUpContacts();
+		
+		Calendar date = new GregorianCalendar(1963, 01, 30);
+		Calendar otherDate = new GregorianCalendar(1968, 02, 12);
+		Set<Contact> guests1 = mgr.getContacts(moe.getId());
+		Set<Contact> guests2 = mgr.getContacts(moe.getId(), larry.getId());
+		Set<Contact> guests3 = mgr.getContacts(moe.getId());
+
+		int meet1Id = mgr.addNewPastMeeting(guests1, date, "Moe got bored");
+		int meet2Id = mgr.addNewPastMeeting(guests2, date, "Moe hit Larry");
+		int meet3Id = mgr.addNewPastMeeting(guests3, otherDate, "Moe got bored again");
+	
+		PastMeeting meet1 = mgr.getPastMeeting(meet1Id);
+		assertNotNull("Expected meeting", meet1);
+		assertEquals("Wrong guest list", guests1, meet1.getContacts());
+		assertEquals("Wrong date list", date, meet1.getDate());
+		PastMeeting meet2 = mgr.getPastMeeting(meet2Id);
+		assertNotNull("Expected meeting", meet2);
+		assertEquals("Wrong guest list", guests2, meet2.getContacts());
+		assertEquals("Wrong date list", date, meet2.getDate());
+		PastMeeting meet3 = mgr.getPastMeeting(meet3Id);
+		assertNotNull("Expected meeting", meet3);
+		assertEquals("Wrong guest list", guests3, meet3.getContacts());
+		assertEquals("Wrong date list", otherDate, meet3.getDate());
+
+		assertEquals("Find mismatch",
+				mgr.getPastMeeting(meet1Id), mgr.getMeeting(meet1Id));
+		assertEquals("Find mismatch",
+				mgr.getPastMeeting(meet2Id), mgr.getMeeting(meet2Id));
+		assertEquals("Find mismatch",
+				mgr.getPastMeeting(meet3Id), mgr.getMeeting(meet3Id));
+		
+		Meeting[] expectedMeetsMoe = {meet1, meet2, meet3};
+		assertEquals("Wrong meeting list",
+				new HashSet<Meeting>(Arrays.asList(expectedMeetsMoe)),
+				new HashSet<Meeting>(mgr.getPastMeetingList(moe)));
+		Meeting[] expectedMeetsLarry = {meet2};
+		assertEquals("Wrong meeting list",
+				new HashSet<Meeting>(Arrays.asList(expectedMeetsLarry)),
+				new HashSet<Meeting>(mgr.getPastMeetingList(larry)));
+		assertEquals("Wrong meeting list",
+				new HashSet<Meeting>(),
+				new HashSet<Meeting>(mgr.getPastMeetingList(curly)));
+
+		assertEquals("Wrong meeting list",
+				new HashSet<Meeting>(),
+				new HashSet<Meeting>(mgr.getFutureMeetingList(moe)));
+	}
+
 }
