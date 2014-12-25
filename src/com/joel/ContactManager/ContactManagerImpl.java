@@ -134,6 +134,7 @@ public class ContactManagerImpl implements ContactManager{
 				result.add(m);
 			}
 		}
+		result.sort ((Meeting a, Meeting b) -> a.getDate().compareTo(b.getDate()));
 		return result;
 	}
 
