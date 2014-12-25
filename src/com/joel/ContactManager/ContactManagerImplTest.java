@@ -337,6 +337,14 @@ public class ContactManagerImplTest {
 		assertEquals("Expected to find", meet, mgr.getMeeting(meetId));
 	}
 
+	@Test(expected=IllegalStateException.class)
+	public void addNotesToFutureMeetingTest() {
+		setUpContacts();
+		Calendar date = new GregorianCalendar(2100, 01, 30);
+		Set<Contact> guests = mgr.getContacts(moe.getId());
+		mgr.addFutureMeeting(guests, date);
+	}
+
 	@Test
 	public void addNotesToPastFutureMeetingTest() {
 		// can't figure out a way to test this, because the interface doesn't
