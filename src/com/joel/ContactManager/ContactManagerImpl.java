@@ -260,6 +260,14 @@ public class ContactManagerImpl implements ContactManager{
 		
 	}
 
+	/**
+	 * Validate that all contacts in a set are known.
+	 *
+	 * @param contacts
+	 *            the contacts to validate.
+	 * @throws NullPointerException
+	 *             if the contact list is null
+	 */	
 	private boolean validateContacts(Collection<Contact> contacts) {
 		Set<Contact> valid = new HashSet<Contact>(contactList.values());
 		for (Contact c: contacts) {
