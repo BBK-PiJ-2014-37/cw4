@@ -322,4 +322,24 @@ public class ContactManagerImplTest {
 				new HashSet<Meeting>(mgr.getFutureMeetingList(moe)));
 	}
 
+	@Test
+	public void addNotesToPastMeetingTest() {
+		setUpContacts();
+		Calendar date = new GregorianCalendar(1963, 01, 30);
+		Set<Contact> guests = mgr.getContacts(moe.getId());
+		int meetId = mgr.addNewPastMeeting(guests, date, "Nothing happened");
+		mgr.addMeetingNotes(meetId, "Then even less happened");
+		PastMeeting meet = (PastMeeting)mgr.getMeeting(meetId);
+		assertNotNull("Expected a meeting", meet);
+		assertEquals("Wrong guest list", guests, meet.getContacts());
+		assertEquals("Wrong date", date, meet.getDate());
+		assertEquals("Wrong notes", "Nothing happened\nThen even less happened", meet.getNotes());
+		assertEquals("Expected to find", meet, mgr.getMeeting(meetId));
+	}
+
+	@Test
+	public void addNotesToPastFutureMeetingTest() {
+		// can't figure out a way to test this, because the interface doesn't
+		// allow to add a FutureMeeting in with a past date.
+	}
 }
