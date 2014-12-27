@@ -1,5 +1,12 @@
 package com.joel.ContactManager;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
@@ -15,6 +22,7 @@ import java.util.Set;
  * A class to manage your contacts and meetings.
  */
 public class ContactManagerImpl implements ContactManager{
+	private static final String SAVEFILENAME = "/tmp/contacts.txt";
 	private Map<Integer,Contact> contactList;
 	private Map<Integer,FutureMeeting> futureMeetingList;
 	private Map<Integer,PastMeeting> pastMeetingList;
@@ -24,7 +32,7 @@ public class ContactManagerImpl implements ContactManager{
 		this.futureMeetingList = new HashMap<Integer,FutureMeeting>();
 		this.pastMeetingList = new HashMap<Integer,PastMeeting>();
 	}
-	
+		
 	/**
 	 * Add a new meeting to be held in the future.
 	 *
@@ -372,16 +380,167 @@ public class ContactManagerImpl implements ContactManager{
 	}
 
 	/**
+	 * Writes an escaped copy of the string, with newlines turned into "\n", 
+	 * backslashes turned into "\\" and an appended newline.
+	 *
+	 * @param w the stream to write to
+	 * @param s the string to escape
+	 */
+	private static void writeEscaped(Writer w, String s) throws IOException {
+		s = s.replace("\\", "\\\\");
+		s = s.replace("\n", "\\n") + "\n";
+		w.write(s, 0, s.length());
+	}
+
+	/**
+	 * Read an unescaped line from the reader, with "\n" turned into newlines, 
+	 * "\\" turned into backslashes and without the trailing newline.
+	 *
+	 * @param s the string to unescape
+	 * @return the unescaped string.
+	 */
+	private static String readUnescaped(BufferedReader r) throws IOException {
+		String s = r.readLine();
+		// if < 2 chars left, no escaping possible
+		if (s.length() < 2) {
+			return s;
+		}
+		String res = "";
+		int i = 0;
+		for (; i < s.length()-1; i++) {
+			if (s.charAt(i) == '\\') {
+				i++;
+				if (s.charAt(i) == 'n') {
+					res += "\n";
+				} else {
+					res += s.charAt(i);
+				}
+			} else {
+				res += s.charAt(i);
+			}
+		}
+		// i == s.length() only if second-to-last char was a backslash
+		if (i == s.length()) {
+			return res;
+		} else {
+			return res + s.charAt(s.length()-1);
+		}
+	}
+
+	/**
 	 * Save all data to disk.
 	 *
 	 * This method must be executed when the program is closed and when/if the
 	 * user requests it.
+	 * 
+	 * The fact that Contact and Meeting ids are managed by the respective
+	 * classes, and we don't have a way to assign IDs to them, means that
+	 * the objects will have different IDs when read in again. This forces
+	 * us to use the contact names as keys when storing the meeting contacts.
+	 * This may lead to unexpected results if contacts with the same name
+	 * exist.
 	 */
 	public void flush() {
+		try {
+			FileWriter file = new FileWriter(SAVEFILENAME);
+			BufferedWriter writer = new BufferedWriter(file);
+			for (Contact c: contactList.values()) {
+				writeEscaped(writer, c.getName());
+				writeEscaped(writer, c.getNotes());
+			}
+			writer.newLine();
+			for (PastMeeting m: pastMeetingList.values()) {
+				Calendar date = m.getDate();
+				writeEscaped(writer, "" + date.get(Calendar.YEAR));
+				writeEscaped(writer, "" + date.get(Calendar.MONTH));
+				writeEscaped(writer, "" + date.get(Calendar.DAY_OF_MONTH));
+				for (Contact c: m.getContacts()) {
+					writeEscaped(writer, c.getName());
+				}
+				writer.newLine();
+				writeEscaped(writer, m.getNotes());
+			}
+			writer.newLine();
+			for (FutureMeeting m: futureMeetingList.values()) {
+				Calendar date = m.getDate();
+				writeEscaped(writer, "" + date.get(Calendar.YEAR));
+				writeEscaped(writer, "" + date.get(Calendar.MONTH));
+				writeEscaped(writer, "" + date.get(Calendar.DAY_OF_MONTH));
+				for (Contact c: m.getContacts()) {
+					writeEscaped(writer, c.getName());
+				}
+				writer.newLine();
+			}			
+			writer.newLine();
+			writer.close();
+			file.close();
+		} catch (IOException i) {
+			i.printStackTrace();
+		}
 	}
 
+	/**
+	 * Read a ContactManager from disk.
+	 *
+	 * This method must be executed when the program starts.
+	 * 
+	 * Guest matching may fail if some contact's name is contained
+	 * within another, since the only way we have to get contacts from the
+	 * manager is by id and name, but we don't know the id.
+	 * 
+	 * @return a ContactManager
+	 */
 	public static ContactManager read() {
-		// TODO Auto-generated method stub
-		return null;
+		ContactManager mgr = new ContactManagerImpl();
+		try {
+			FileReader file = new FileReader(SAVEFILENAME);
+			BufferedReader reader = new BufferedReader(file);
+			String line = readUnescaped(reader);
+			while (!line.isEmpty()) {
+				String name = line;
+				String notes = readUnescaped(reader);
+				mgr.addNewContact(name, notes);				
+				line = readUnescaped(reader);
+			}
+			line = readUnescaped(reader);
+			while (!line.isEmpty()) {
+				int year = Integer.parseInt(line);
+				int month = Integer.parseInt(readUnescaped(reader));
+				int day = Integer.parseInt(readUnescaped(reader));
+				Calendar date = new GregorianCalendar(year, month, day);
+				line = readUnescaped(reader);
+				Set<Contact> guests = new HashSet<Contact>();
+				while (!line.isEmpty()) {
+					guests.add(mgr.getContacts(line).iterator().next());
+					line = readUnescaped(reader);
+				}
+				String notes = readUnescaped(reader);
+				mgr.addNewPastMeeting(guests, date, notes);
+				line = readUnescaped(reader);
+			}
+			line = readUnescaped(reader);
+			while (!line.isEmpty()) {
+				int year = Integer.parseInt(line);
+				int month = Integer.parseInt(readUnescaped(reader));
+				int day = Integer.parseInt(readUnescaped(reader));
+				Calendar date = new GregorianCalendar(year, month, day);
+				line = readUnescaped(reader);
+				Set<Contact> guests = new HashSet<Contact>();
+				while (!line.isEmpty()) {
+					guests.add(mgr.getContacts(line).iterator().next());
+					line = readUnescaped(reader);
+				}
+				mgr.addFutureMeeting(guests, date);
+				line = readUnescaped(reader);
+			}
+			reader.close();
+			file.close();
+		} catch (FileNotFoundException e) {
+			System.out.println(SAVEFILENAME + ": file not found");
+		} catch (IOException i) {
+			i.printStackTrace();
+		}
+		return mgr;
 	}
+
 }
