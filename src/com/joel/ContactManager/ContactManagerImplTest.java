@@ -322,6 +322,11 @@ public class ContactManagerImplTest {
 				new HashSet<Meeting>(mgr.getFutureMeetingList(moe)));
 	}
 
+	/**
+	 * This test fails because PastMeeting lacks a method to add text to the
+	 * notes
+	 * 
+	 */
 	@Test
 	public void addNotesToPastMeetingTest() {
 		setUpContacts();
@@ -352,6 +357,12 @@ public class ContactManagerImplTest {
 		// allow to add a FutureMeeting in with a past date.
 	}
 	
+	/**
+	 * This test fails because we can't implement an equals() method in
+	 * ContactManagerImpl because the needed methods are not available in the
+	 * interface. We'd need methods to obtain all the contacts as well as all
+	 * the PastMeetings and all the FutureMeetings.
+	 */
 	@Test
 	public void flushReadTest() {
 		setUpContacts();
