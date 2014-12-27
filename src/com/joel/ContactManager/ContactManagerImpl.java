@@ -16,11 +16,13 @@ import java.util.Set;
  */
 public class ContactManagerImpl implements ContactManager{
 	private Map<Integer,Contact> contactList;
-	private Map<Integer,Meeting> meetingList;
+	private Map<Integer,FutureMeeting> futureMeetingList;
+	private Map<Integer,PastMeeting> pastMeetingList;
 	
 	public ContactManagerImpl() {
 		this.contactList = new HashMap<Integer,Contact>();
-		this.meetingList = new HashMap<Integer,Meeting>();
+		this.futureMeetingList = new HashMap<Integer,FutureMeeting>();
+		this.pastMeetingList = new HashMap<Integer,PastMeeting>();
 	}
 	
 	/**
@@ -44,7 +46,7 @@ public class ContactManagerImpl implements ContactManager{
 			throw new IllegalArgumentException("Unknown contact(s)");			
 		}
 		FutureMeeting m = new FutureMeetingImpl(contacts, date);
-		meetingList.put(m.getId(), m);
+		futureMeetingList.put(m.getId(), m);
 		return m.getId();
 	}
 
@@ -74,11 +76,10 @@ public class ContactManagerImpl implements ContactManager{
 	 *             if there is a meeting with that ID happening in the future
 	 */
 	public PastMeeting getPastMeeting(int id) {
-		Meeting m = getMeeting(id);
-		if (m != null && m.getDate(). after(new GregorianCalendar())) {
+		if (futureMeetingList.get(id) != null) {
 			throw new IllegalArgumentException();
 		}
-		return (PastMeeting)m;
+		return pastMeetingList.get(id);
 	}
 
 	/**
@@ -92,11 +93,10 @@ public class ContactManagerImpl implements ContactManager{
 	 *             if there is a meeting with that ID happening in the past
 	 */
 	public FutureMeeting getFutureMeeting(int id) {
-		Meeting m = getMeeting(id);
-		if (m != null && m.getDate().before(new GregorianCalendar())) {
+		if (pastMeetingList.get(id) != null) {
 			throw new IllegalArgumentException();
 		}
-		return (FutureMeeting)m;
+		return futureMeetingList.get(id);
 	}
 
 	/**
@@ -107,7 +107,11 @@ public class ContactManagerImpl implements ContactManager{
 	 * @return the meeting with the requested ID, or null if it there is none.
 	 */
 	public Meeting getMeeting(int id) {
-		return meetingList.get(id);
+		Meeting m = pastMeetingList.get(id);
+		if (m != null) {
+			return m;
+		}
+		return futureMeetingList.get(id);
 	}
 
 	/**
@@ -129,7 +133,12 @@ public class ContactManagerImpl implements ContactManager{
 					+ " does not exist.");
 		}
 		List<Meeting> result = new ArrayList<Meeting>(); 
-		for (Meeting m : meetingList.values()) {
+		for (Meeting m : futureMeetingList.values()) {
+			if(m.getContacts().contains(contact)) {
+				result.add(m);
+			}
+		}
+		for (Meeting m : pastMeetingList.values()) {
 			if(m.getContacts().contains(contact)) {
 				result.add(m);
 			}
@@ -175,11 +184,17 @@ public class ContactManagerImpl implements ContactManager{
 	 */
 	public List<Meeting> getFutureMeetingList(Calendar date) {
 		List<Meeting> result = new ArrayList<Meeting>(); 
-		for (Meeting m : meetingList.values()) {
+		for (Meeting m : pastMeetingList.values()) {
 			if(m.getDate().equals(date)) {
 				result.add(m);
 			}
 		}
+		for (Meeting m : futureMeetingList.values()) {
+			if(m.getDate().equals(date)) {
+				result.add(m);
+			}
+		}
+		result.sort ((Meeting a, Meeting b) -> a.getDate().compareTo(b.getDate()));
 		return result;
 	}
 	
@@ -198,12 +213,12 @@ public class ContactManagerImpl implements ContactManager{
 	 */
 	public List<PastMeeting> getPastMeetingList(Contact contact) {
 		List<PastMeeting> list = new ArrayList<PastMeeting>();
-		GregorianCalendar today = new GregorianCalendar();
-		for (Meeting meet: getMeetingList(contact)) {
-			if (meet.getDate().before(today)) {
-				list.add((PastMeeting)meet);
+		for (PastMeeting meet: pastMeetingList.values()) {
+			if (meet.getContacts().contains(contact)) {
+				list.add(meet);
 			}
 		}
+		list.sort ((Meeting a, Meeting b) -> a.getDate().compareTo(b.getDate()));
 		return list;
 	}
 
@@ -234,7 +249,7 @@ public class ContactManagerImpl implements ContactManager{
 			throw new NullPointerException("Expected meeting notes");
 		}
 		PastMeeting m = new PastMeetingImpl(contacts, date, text);
-		meetingList.put(m.getId(), m);
+		pastMeetingList.put(m.getId(), m);
 		return m.getId();
 	}
 
@@ -258,20 +273,23 @@ public class ContactManagerImpl implements ContactManager{
 	 *             if the notes are null
 	 */
 	public void addMeetingNotes(int id, String text) {
-		Meeting meet = getMeeting(id);
-		if (meet == null) {
-			throw new IllegalArgumentException("Attempt to add note to non-existing meeting");
+		PastMeeting pm = pastMeetingList.get(id);
+		FutureMeeting fm = futureMeetingList.get(id);
+		if (fm == null && pm == null) {
+			throw new IllegalArgumentException(
+					"Attempt to add note to non-existing meeting");
 		}
-		if (meet.getDate().after(new GregorianCalendar())) {
-			throw new IllegalStateException("Attempt to add note to future meeting");
-		}
-		// What do I do here?
-		// If meet is a PastMeeting, I can't change its notes (no method for that).
-		// If it is a FutureMeeting, I can replace it with a PastMeeting. But I can't
-		// figure out what it is without using instanceof, which is discouraged.
-		if (meet instanceof FutureMeeting) {
-			addNewPastMeeting(meet.getContacts(), meet.getDate(), text);
-			meetingList.remove(meet.getId());
+		// only one of pm and fm can be non-null
+		if (fm != null) {
+			if (fm.getDate().after(new GregorianCalendar())) {
+				throw new IllegalStateException(
+						"Attempt to add note to future meeting");
+			}
+			addNewPastMeeting(fm.getContacts(), fm.getDate(), text);
+			futureMeetingList.remove(fm.getId());
+		} else {
+			// Don't know what to do here... PastMeeting doesn't have
+			// and addNote() method.
 		}
 	}
 
@@ -360,7 +378,6 @@ public class ContactManagerImpl implements ContactManager{
 	 * user requests it.
 	 */
 	public void flush() {
-		
 	}
 
 	public static ContactManager read() {
