@@ -110,7 +110,7 @@ public class ContactManagerImplTest {
 		setUpContacts();
 		mgr.addFutureMeeting(
 				mgr.getContacts(moe.getId()),
-				new GregorianCalendar(1963, 01, 30));
+				new GregorianCalendar(1963, 01, 27));
 	}
 
 	@Test(expected=IllegalArgumentException.class)
@@ -118,7 +118,7 @@ public class ContactManagerImplTest {
 		setUpContacts();
 		mgr.addFutureMeeting(
 				new HashSet<Contact>(),
-				new GregorianCalendar(2020, 01, 30));
+				new GregorianCalendar(2020, 01, 27));
 	}
 
 	@Test(expected=IllegalArgumentException.class)
@@ -129,7 +129,7 @@ public class ContactManagerImplTest {
 		guests.add(moe);
 		guests.add(wrongContact);
 		mgr.addFutureMeeting(
-				guests,	new GregorianCalendar(2020, 01, 30));
+				guests,	new GregorianCalendar(2020, 01, 27));
 	}
 
 	@Test
@@ -140,7 +140,7 @@ public class ContactManagerImplTest {
 	@Test
 	public void addFutureMeetingTest() {
 		setUpContacts();
-		Calendar date = new GregorianCalendar(2020, 01, 30);
+		Calendar date = new GregorianCalendar(2020, 01, 27);
 		Set<Contact> guests = mgr.getContacts(moe.getId());
 		int meetId = mgr.addFutureMeeting(guests, date);
 		FutureMeeting meet = mgr.getFutureMeeting(meetId);
@@ -154,7 +154,7 @@ public class ContactManagerImplTest {
 	public void addSeveralFutureMeetingsTest() {
 		setUpContacts();
 		
-		Calendar date = new GregorianCalendar(2020, 01, 30);
+		Calendar date = new GregorianCalendar(2020, 01, 27);
 		Calendar otherDate = new GregorianCalendar(2020, 02, 12);
 		Set<Contact> guests1 = mgr.getContacts(moe.getId());
 		Set<Contact> guests2 = mgr.getContacts(moe.getId(), larry.getId());
@@ -218,27 +218,27 @@ public class ContactManagerImplTest {
 	@Test(expected=IllegalArgumentException.class)
 	public void pastMeetingInFutureTest() {
 		setUpContacts();
-		mgr.addNewPastMeeting(mgr.getContacts(moe.getId()), new GregorianCalendar(2100, 01, 30),
+		mgr.addNewPastMeeting(mgr.getContacts(moe.getId()), new GregorianCalendar(2100, 01, 27),
 				"Bogus notes");
 	}
 
 	@Test(expected=IllegalArgumentException.class)
 	public void pastMeetingEmptyGuests() {
 		setUpContacts();
-		mgr.addNewPastMeeting(new HashSet<Contact>(), new GregorianCalendar(1963, 01, 30),
+		mgr.addNewPastMeeting(new HashSet<Contact>(), new GregorianCalendar(1963, 01, 27),
 				"Bogus notes");
 	}
 
 	@Test(expected=NullPointerException.class)
 	public void pastMeetingNullNotes() {
 		setUpContacts();
-		mgr.addNewPastMeeting(mgr.getContacts(moe.getId()), new GregorianCalendar(1963, 01, 30), null);
+		mgr.addNewPastMeeting(mgr.getContacts(moe.getId()), new GregorianCalendar(1963, 01, 27), null);
 	}
 
 	@Test(expected=NullPointerException.class)
 	public void pastMeetingNullGuests() {
 		setUpContacts();
-		mgr.addNewPastMeeting(null,	new GregorianCalendar(1963, 01, 30), "Bogus notes");
+		mgr.addNewPastMeeting(null,	new GregorianCalendar(1963, 01, 27), "Bogus notes");
 	}
 
 	@Test(expected=NullPointerException.class)
@@ -254,13 +254,13 @@ public class ContactManagerImplTest {
 		Set<Contact> guests = new HashSet<Contact>();
 		guests.add(moe);
 		guests.add(wrongContact);
-		mgr.addFutureMeeting(guests, new GregorianCalendar(1963, 01, 30));
+		mgr.addFutureMeeting(guests, new GregorianCalendar(1963, 01, 27));
 	}
 	
 	@Test
 	public void addPastMeetingTest() {
 		setUpContacts();
-		Calendar date = new GregorianCalendar(1963, 01, 30);
+		Calendar date = new GregorianCalendar(1963, 01, 27);
 		Set<Contact> guests = mgr.getContacts(moe.getId());
 		int meetId = mgr.addNewPastMeeting(guests, date, "Nothing happened");
 		PastMeeting meet = (PastMeeting)mgr.getMeeting(meetId);
@@ -275,7 +275,7 @@ public class ContactManagerImplTest {
 	public void addSeveralPastMeetingsTest() {
 		setUpContacts();
 		
-		Calendar date = new GregorianCalendar(1963, 01, 30);
+		Calendar date = new GregorianCalendar(1963, 01, 27);
 		Calendar otherDate = new GregorianCalendar(1968, 02, 12);
 		Set<Contact> guests1 = mgr.getContacts(moe.getId());
 		Set<Contact> guests2 = mgr.getContacts(moe.getId(), larry.getId());
@@ -325,7 +325,7 @@ public class ContactManagerImplTest {
 	@Test
 	public void addNotesToPastMeetingTest() {
 		setUpContacts();
-		Calendar date = new GregorianCalendar(1963, 01, 30);
+		Calendar date = new GregorianCalendar(1963, 01, 27);
 		Set<Contact> guests = mgr.getContacts(moe.getId());
 		int meetId = mgr.addNewPastMeeting(guests, date, "Nothing happened");
 		mgr.addMeetingNotes(meetId, "Really, nothing happened");
@@ -340,7 +340,7 @@ public class ContactManagerImplTest {
 	@Test(expected=IllegalStateException.class)
 	public void addNotesToFutureMeetingTest() {
 		setUpContacts();
-		Calendar date = new GregorianCalendar(2100, 01, 30);
+		Calendar date = new GregorianCalendar(2100, 01, 27);
 		Set<Contact> guests = mgr.getContacts(moe.getId());
 		int meetId = mgr.addFutureMeeting(guests, date);
 		mgr.addMeetingNotes(meetId, "Really, nothing happened");
@@ -355,7 +355,7 @@ public class ContactManagerImplTest {
 	@Test
 	public void flushReadTest() {
 		setUpContacts();
-		Calendar date = new GregorianCalendar(1963, 01, 30);
+		Calendar date = new GregorianCalendar(1963, 01, 27);
 		Calendar otherDate = new GregorianCalendar(2030, 02, 12);
 		Set<Contact> guests1 = mgr.getContacts(moe.getId());
 		Set<Contact> guests2 = mgr.getContacts(moe.getId(), larry.getId());
