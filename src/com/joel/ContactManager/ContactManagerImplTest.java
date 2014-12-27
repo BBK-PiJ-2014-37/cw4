@@ -351,4 +351,21 @@ public class ContactManagerImplTest {
 		// can't figure out a way to test this, because the interface doesn't
 		// allow to add a FutureMeeting in with a past date.
 	}
+	
+	@Test
+	public void flushReadTest() {
+		setUpContacts();
+		Calendar date = new GregorianCalendar(1963, 01, 30);
+		Calendar otherDate = new GregorianCalendar(2030, 02, 12);
+		Set<Contact> guests1 = mgr.getContacts(moe.getId());
+		Set<Contact> guests2 = mgr.getContacts(moe.getId(), larry.getId());
+		Set<Contact> guests3 = mgr.getContacts(moe.getId());
+
+		mgr.addNewPastMeeting(guests1, date, "Moe got bored");
+		mgr.addNewPastMeeting(guests2, date, "Moe hit Larry");
+		mgr.addFutureMeeting(guests3, otherDate);
+		mgr.flush();
+		ContactManager mgr2 = ContactManagerImpl.read();
+		assertEquals("Data read does not match original", mgr, mgr2);
+	}
 }

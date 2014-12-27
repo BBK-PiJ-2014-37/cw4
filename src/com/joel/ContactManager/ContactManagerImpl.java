@@ -362,4 +362,9 @@ public class ContactManagerImpl implements ContactManager{
 	public void flush() {
 		
 	}
+
+	public static ContactManager read() {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }
