@@ -18,16 +18,40 @@ public abstract class MeetingImpl implements Meeting {
 	private static int nextId = 1;
 
 	/**
+	 * Set private fields.
+	 * 
+	 * @param contacts
+	 *            a list of participants
+	 * @param date
+	 *            the meeting date
+	 */
+	private void setFields(Set<Contact> contacts, Calendar date) {
+		this.contacts = contacts;
+		this.date = date;
+	}
+	
+	/**
+	 * Initialize a Meeeting from raw data, allocating a new id.
+	 * 
 	 * @param contacts
 	 *            a list of participants
 	 * @param date
 	 *            the meeting date
 	 */
 	public MeetingImpl(Set<Contact> contacts, Calendar date) {
-		this.contacts = contacts;
-		this.date = date;
+		setFields(contacts, date);
 		this.id = nextId;
 		nextId++;
+	}
+	
+	/**
+	 * Initialize a new Meeting by copying another, id and all.
+	 * 
+	 * @param m the meeting to copy.
+	 */
+	public MeetingImpl(Meeting m) {
+		setFields(m.getContacts(), m.getDate());
+		this.id = m.getId();
 	}
 
 	/**
