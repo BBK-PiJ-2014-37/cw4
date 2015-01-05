@@ -262,7 +262,8 @@ public class ContactManagerImplTest {
 		setUpContacts();
 		Calendar date = new GregorianCalendar(1963, 01, 27);
 		Set<Contact> guests = mgr.getContacts(moe.getId());
-		int meetId = mgr.addNewPastMeeting(guests, date, "Nothing happened");
+		mgr.addNewPastMeeting(guests, date, "Nothing happened");
+		int meetId = mgr.getPastMeetingList(moe).get(0).getId();
 		PastMeeting meet = (PastMeeting)mgr.getMeeting(meetId);
 		assertNotNull("Expected a meeting", meet);
 		assertEquals("Wrong guest list", guests, meet.getContacts());
@@ -278,12 +279,15 @@ public class ContactManagerImplTest {
 		Calendar date = new GregorianCalendar(1963, 01, 27);
 		Calendar otherDate = new GregorianCalendar(1968, 02, 12);
 		Set<Contact> guests1 = mgr.getContacts(moe.getId());
-		Set<Contact> guests2 = mgr.getContacts(moe.getId(), larry.getId());
-		Set<Contact> guests3 = mgr.getContacts(moe.getId());
+		Set<Contact> guests2 = mgr.getContacts(larry.getId());
+		Set<Contact> guests3 = mgr.getContacts(curly.getId());
 
-		int meet1Id = mgr.addNewPastMeeting(guests1, date, "Moe got bored");
-		int meet2Id = mgr.addNewPastMeeting(guests2, date, "Moe hit Larry");
-		int meet3Id = mgr.addNewPastMeeting(guests3, otherDate, "Moe got bored again");
+		mgr.addNewPastMeeting(guests1, date, "Moe got bored");
+		mgr.addNewPastMeeting(guests2, date, "Moe hit Larry");
+		mgr.addNewPastMeeting(guests3, otherDate, "Moe got bored again");
+		int meet1Id = mgr.getPastMeetingList(moe).get(0).getId();
+		int meet2Id = mgr.getPastMeetingList(larry).get(0).getId();
+		int meet3Id = mgr.getPastMeetingList(curly).get(0).getId();
 	
 		PastMeeting meet1 = mgr.getPastMeeting(meet1Id);
 		assertNotNull("Expected meeting", meet1);
@@ -305,7 +309,7 @@ public class ContactManagerImplTest {
 		assertEquals("Find mismatch",
 				mgr.getPastMeeting(meet3Id), mgr.getMeeting(meet3Id));
 		
-		Meeting[] expectedMeetsMoe = {meet1, meet2, meet3};
+		Meeting[] expectedMeetsMoe = {meet1};
 		assertEquals("Wrong meeting list",
 				new HashSet<Meeting>(Arrays.asList(expectedMeetsMoe)),
 				new HashSet<Meeting>(mgr.getPastMeetingList(moe)));
@@ -313,8 +317,9 @@ public class ContactManagerImplTest {
 		assertEquals("Wrong meeting list",
 				new HashSet<Meeting>(Arrays.asList(expectedMeetsLarry)),
 				new HashSet<Meeting>(mgr.getPastMeetingList(larry)));
+		Meeting[] expectedMeetsCurly = {meet3};
 		assertEquals("Wrong meeting list",
-				new HashSet<Meeting>(),
+				new HashSet<Meeting>(Arrays.asList(expectedMeetsCurly)),
 				new HashSet<Meeting>(mgr.getPastMeetingList(curly)));
 
 		assertEquals("Wrong meeting list",
@@ -322,23 +327,20 @@ public class ContactManagerImplTest {
 				new HashSet<Meeting>(mgr.getFutureMeetingList(moe)));
 	}
 
-	/**
-	 * This test fails because PastMeeting lacks a method to add text to the
-	 * notes
-	 * 
-	 */
 	@Test
 	public void addNotesToPastMeetingTest() {
 		setUpContacts();
 		Calendar date = new GregorianCalendar(1963, 01, 27);
 		Set<Contact> guests = mgr.getContacts(moe.getId());
-		int meetId = mgr.addNewPastMeeting(guests, date, "Nothing happened");
+		mgr.addNewPastMeeting(guests, date, "Nothing happened");
+		int meetId = mgr.getPastMeetingList(moe).get(0).getId();
 		mgr.addMeetingNotes(meetId, "Really, nothing happened");
 		PastMeeting meet = (PastMeeting)mgr.getMeeting(meetId);
 		assertNotNull("Expected a meeting", meet);
 		assertEquals("Wrong guest list", guests, meet.getContacts());
 		assertEquals("Wrong date", date, meet.getDate());
-		assertEquals("Wrong notes", "Really, nothing happened", meet.getNotes());
+		assertEquals("Wrong notes", "Nothing happened\nReally, nothing happened",
+				meet.getNotes());
 		assertEquals("Expected to find", meet, mgr.getMeeting(meetId));
 	}
 

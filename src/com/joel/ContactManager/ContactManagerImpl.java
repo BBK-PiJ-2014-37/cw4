@@ -246,7 +246,7 @@ public class ContactManagerImpl implements ContactManager{
 	 * @throws NullPointerException
 	 *             if any of the arguments is null
 	 */
-	public int addNewPastMeeting(Set<Contact> contacts, Calendar date, String text) {
+	public void addNewPastMeeting(Set<Contact> contacts, Calendar date, String text) {
 		if (date.after(new GregorianCalendar())) {
 			throw new IllegalArgumentException("Date not in past " + date);
 		}
@@ -258,7 +258,6 @@ public class ContactManagerImpl implements ContactManager{
 		}
 		PastMeeting m = new PastMeetingImpl(contacts, date, text);
 		pastMeetingList.put(m.getId(), m);
-		return m.getId();
 	}
 
 	/**
@@ -296,8 +295,7 @@ public class ContactManagerImpl implements ContactManager{
 			addNewPastMeeting(fm.getContacts(), fm.getDate(), text);
 			futureMeetingList.remove(fm.getId());
 		} else {
-			// Don't know what to do here... PastMeeting doesn't have
-			// and addNote() method.
+			pastMeetingList.put(id, new PastMeetingImpl(pm, text));
 		}
 	}
 

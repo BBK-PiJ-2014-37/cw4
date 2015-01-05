@@ -108,7 +108,6 @@ public interface ContactManager {
 	 *            the date on which the meeting took place
 	 * @param text
 	 *            messages to be added about the meeting.
-	 * @return TODO
 	 * @throws IllegalArgumentException
 	 *             if the list of contacts is
 	 *
@@ -116,7 +115,7 @@ public interface ContactManager {
 	 * @throws NullPointerException
 	 *             if any of the arguments is null
 	 */
-	int addNewPastMeeting(Set<Contact> contacts, Calendar date, String text);
+	void addNewPastMeeting(Set<Contact> contacts, Calendar date, String text);
 
 	/**
 	 * Add notes to a meeting.
