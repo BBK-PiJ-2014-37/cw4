@@ -12,12 +12,26 @@ import java.util.Set;
 import org.junit.Before;
 import org.junit.Test;
 
+class FakeCurrentDayProvider implements CurrentDateProvider {
+	Calendar date;
+	
+	public FakeCurrentDayProvider(Calendar date) {
+		this.date = date;
+	}
+	
+	public Calendar today() {
+		return date;
+	}
+	
+}
 public class ContactManagerImplTest {
 	ContactManager mgr;
 	Contact moe, larry, curly;
 	
 	@Before
 	public void setUp() {
+		ContactManagerImpl.todayProvider =
+				new FakeCurrentDayProvider(new GregorianCalendar(2014,  11, 30));
 		mgr = new ContactManagerImpl();
 	}
 	
@@ -337,11 +351,11 @@ public class ContactManagerImplTest {
 		mgr.addMeetingNotes(meetId, "Really, nothing happened");
 		PastMeeting meet = (PastMeeting)mgr.getMeeting(meetId);
 		assertNotNull("Expected a meeting", meet);
+		assertEquals("Wrong id", meetId, meet.getId());
 		assertEquals("Wrong guest list", guests, meet.getContacts());
 		assertEquals("Wrong date", date, meet.getDate());
 		assertEquals("Wrong notes", "Nothing happened\nReally, nothing happened",
 				meet.getNotes());
-		assertEquals("Expected to find", meet, mgr.getMeeting(meetId));
 	}
 
 	@Test(expected=IllegalStateException.class)
@@ -355,8 +369,21 @@ public class ContactManagerImplTest {
 
 	@Test
 	public void addNotesToPastFutureMeetingTest() {
-		// can't figure out a way to test this, because the interface doesn't
-		// allow to add a FutureMeeting in with a past date.
+		setUpContacts();
+		Calendar date = new GregorianCalendar(2020, 01, 27);
+		Set<Contact> guests = mgr.getContacts(moe.getId());
+		int meetId = mgr.addFutureMeeting(guests, date);
+		// Time machine!
+		ContactManagerImpl.todayProvider =
+				new FakeCurrentDayProvider(new GregorianCalendar(2030, 01, 01));
+		String text = "Can't remember, long ago";
+		mgr.addMeetingNotes(meetId, text);
+		PastMeeting meet = mgr.getPastMeeting(meetId);
+		assertNotNull("Expected a meeting", meet);
+		assertEquals("Wrong id", meetId, meet.getId());
+		assertEquals("Wrong guest list", guests, meet.getContacts());
+		assertEquals("Wrong date", date, meet.getDate());
+		assertEquals("Wrong notes", text, meet.getNotes());
 	}
 	
 	/**

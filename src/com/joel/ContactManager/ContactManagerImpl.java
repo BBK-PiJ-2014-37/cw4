@@ -18,10 +18,22 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+interface CurrentDateProvider {
+	Calendar today();
+}
+
+class GregorianCalendarCurrentDateProvider implements CurrentDateProvider {
+	public Calendar today() {
+		return new GregorianCalendar();
+	}
+}
+
 /**
  * A class to manage your contacts and meetings.
  */
 public class ContactManagerImpl implements ContactManager{
+	public static CurrentDateProvider todayProvider =
+			new GregorianCalendarCurrentDateProvider();
 	private static final String SAVEFILENAME = "/tmp/contacts.txt";
 	private Map<Integer,Contact> contactList;
 	private Map<Integer,FutureMeeting> futureMeetingList;
@@ -47,7 +59,7 @@ public class ContactManagerImpl implements ContactManager{
 	 *             of if any contact is unknown / non-existent
 	 */
 	public int addFutureMeeting(Set<Contact> contacts, Calendar date) {
-		if (date.before(new GregorianCalendar())) {
+		if (date.before(todayProvider.today())) {
 			throw new IllegalArgumentException("Date not in future " + date);
 		}
 		if (contacts.size() == 0 || !validateContacts(contacts)) {
@@ -170,7 +182,7 @@ public class ContactManagerImpl implements ContactManager{
 	 */
 	public List<Meeting> getFutureMeetingList(Contact contact) {
 		List<Meeting> list = new ArrayList<Meeting>();
-		GregorianCalendar today = new GregorianCalendar();
+		Calendar today = todayProvider.today();
 		for (Meeting meet: getMeetingList(contact)) {
 			if (meet.getDate().after(today)) {
 				list.add(meet);
@@ -247,7 +259,7 @@ public class ContactManagerImpl implements ContactManager{
 	 *             if any of the arguments is null
 	 */
 	public void addNewPastMeeting(Set<Contact> contacts, Calendar date, String text) {
-		if (date.after(new GregorianCalendar())) {
+		if (date.after(todayProvider.today())) {
 			throw new IllegalArgumentException("Date not in past " + date);
 		}
 		if (contacts.size() == 0 || !validateContacts(contacts)) {
@@ -288,12 +300,12 @@ public class ContactManagerImpl implements ContactManager{
 		}
 		// only one of pm and fm can be non-null
 		if (fm != null) {
-			if (fm.getDate().after(new GregorianCalendar())) {
+			if (fm.getDate().after(todayProvider.today())) {
 				throw new IllegalStateException(
 						"Attempt to add note to future meeting");
 			}
-			addNewPastMeeting(fm.getContacts(), fm.getDate(), text);
-			futureMeetingList.remove(fm.getId());
+			pastMeetingList.put(id, new PastMeetingImpl(fm, text));
+			futureMeetingList.remove(id);
 		} else {
 			pastMeetingList.put(id, new PastMeetingImpl(pm, text));
 		}
