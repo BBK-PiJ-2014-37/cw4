@@ -34,7 +34,6 @@ public class PastMeetingImplTest extends MeetingImplTest {
 				fm.getDate(), pm.getDate());
 		assertEquals("Wrong notes for past meeting from future",
 				notes1, pm.getNotes());
-
 	}
 
 	@Test
